@@ -1,0 +1,110 @@
+#include "config.h"
+#include "system.h"
+#include "coretypes.h"
+#include "backend.h"
+#include "tree.h"
+#include "gimple.h"
+#include "pass_manager.h"
+#include "context.h"
+#include "diagnostic-core.h"
+#include "tree-pass.h"
+#include "ssa.h"
+#include "tree-pretty-print.h"
+#include "internal-fn.h"
+#include "gimple-iterator.h"
+#include "gimple-walk.h"
+#include "internal-fn.h"
+#include "tree-core.h"
+#include "basic-block.h"
+
+// Added headers:
+#include "gimple-ssa.h"
+#include "cgraph.h"
+#include "attribs.h"
+#include "pretty-print.h"
+#include "tree-inline.h"
+#include "intl.h"
+#include "dumpfile.h"
+#include "builtins.h"
+
+namespace {
+
+const pass_data pass_data_zwang331 = {
+    GIMPLE_PASS,      /* type */
+    "zwang331",       /* name */
+    OPTGROUP_NONE,    /* optinfo_flags */
+    TV_NONE,          /* tv_id */
+    PROP_cfg,         /* properties_required */
+    0,                /* properties_provided */
+    0,                /* properties_destroyed */
+    0,                /* todo_flags_start */
+    0,                /* todo_flags_finish */
+};
+
+class pass_zwang331 : public gimple_opt_pass {
+public:
+    pass_zwang331(gcc::context *ctxt)
+        : gimple_opt_pass(pass_data_zwang331, ctxt) {}
+
+    bool gate(function *) final override {
+        return true;  // Always run the pass
+    }
+
+    unsigned int execute(function *fun) final override;
+};  // class pass_zwang331
+
+unsigned int
+pass_zwang331::execute(function *fun) {
+    int bb_count = 0;
+    int gimple_stmt_count = 0;
+    basic_block bb;
+
+    if (dump_file) {
+        fprintf(dump_file, "--------------------------------------------------------------------\n");
+        fprintf(dump_file, "%s\n", IDENTIFIER_POINTER(DECL_NAME(fun->decl)));
+        fprintf(dump_file, "--------------------------------------------------------------------\n");
+
+        FOR_EACH_BB_FN(bb, fun) {
+                bb_count++;
+                int bb_gimple_count = 0;
+
+                for (gimple_stmt_iterator gsi = gsi_start_bb(bb); !gsi_end_p(gsi); gsi_next(&gsi)) {
+                        gimple *stmt = gsi_stmt(gsi);
+                        bb_gimple_count++;
+
+                        fprintf(dump_file, "\n  Gimple code:       %d\n", gimple_code(stmt));
+                        fprintf(dump_file, "  Gimple code name:  %s\n", gimple_code_name[gimple_code(stmt)]);
+
+                        // Iterate over operands
+                        for (unsigned int i = 0; i < gimple_num_ops(stmt); i++) {
+                                tree op = gimple_op(stmt, i);
+                                if (op) {
+                                        fprintf(dump_file, "  Operand:");
+                                        print_generic_expr(dump_file, op, TDF_NONE);
+                                        fprintf(dump_file, "\n");
+                                }
+                        }
+
+                        fprintf(dump_file, "--------------------------------------------------------------------\n");
+        }
+
+        gimple_stmt_count += bb_gimple_count;
+}
+
+
+    }
+    if (dump_file){
+        fprintf(dump_file, "Total Basic Blocks: %d\n", bb_count);
+        fprintf(dump_file, "Total GIMPLE Statements: %d\n", gimple_stmt_count);
+    }
+
+    return 0;
+}
+
+} // anonymous namespace
+
+gimple_opt_pass *
+make_pass_zwang331 (gcc::context *ctxt)
+{
+    return new pass_zwang331 (ctxt);
+}
